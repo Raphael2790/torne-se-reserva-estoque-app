@@ -1,4 +1,5 @@
 
+
 def reservar_estoque_uc(estoque, produto_id, quantidade):
     """
     Função para reservar estoque de um produto.
@@ -16,9 +17,6 @@ def reservar_estoque_uc(estoque, produto_id, quantidade):
 
     estoque[produto_id] -= quantidade
     return f"Reserva de {quantidade} unidades do produto {produto_id} realizada com sucesso."
-
-
-print(__name__)
 
 
 # Exemplo de uso
