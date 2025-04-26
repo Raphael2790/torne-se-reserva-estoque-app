@@ -14,4 +14,4 @@ class MensagemFila:
 class ServicoFila(ABC):
     @abstractmethod
     def enviar_mensagem(self, mensagem: MensagemFila, url_fila: str) -> None:
-        pass 
+        pass

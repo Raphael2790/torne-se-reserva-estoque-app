@@ -1,12 +1,12 @@
 import json
 
 from botocore.exceptions import ClientError
-
+import boto3
 from domain.services.queue_service import MensagemFila, ServicoFila
 
 
 class ServicoSQS(ServicoFila):
-    def __init__(self, sqs_client):
+    def __init__(self, sqs_client: boto3.client):
         self.sqs = sqs_client
     
     def enviar_mensagem(self, mensagem: MensagemFila, url_fila: str) -> None:
@@ -25,4 +25,4 @@ class ServicoSQS(ServicoFila):
             )
         except ClientError as e:
             print(f"Erro ao enviar mensagem para SQS: {e}")
-            raise 
+            raise

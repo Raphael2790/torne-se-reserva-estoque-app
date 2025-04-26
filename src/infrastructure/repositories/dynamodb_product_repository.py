@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 
 from botocore.exceptions import ClientError
@@ -12,9 +12,16 @@ class RepositorioItemEstoqueDynamoDB(RepositorioItemEstoque):
         self.dynamodb = dynamodb_client
         self.tabela = self.dynamodb.Table(nome_tabela)
     
-    def obter_por_sku(self, id_sku: int) -> Optional[ItemEstoque]:
+    def obter_por_sku(self, id_sku: int, data_pedido: Optional[datetime] = None) -> Optional[ItemEstoque]:
         try:
-            resposta = self.tabela.get_item(Key={'id_sku': id_sku})
+            # Se não for fornecida uma data, usa a data atual
+            if data_pedido is None:
+                data_pedido = datetime.now()
+            
+            # Converte a data do pedido para o formato de data base (YYYY-MM-DD)
+            data_base = data_pedido.date().isoformat()
+            
+            resposta = self.tabela.get_item(Key={'id_sku': id_sku, 'data_base': data_base}, ConsistentRead=True)
             item = resposta.get('Item')
             
             if not item:
@@ -51,20 +58,18 @@ class RepositorioItemEstoqueDynamoDB(RepositorioItemEstoque):
     def atualizar(self, item: ItemEstoque) -> None:
         try:
             self.tabela.update_item(
-                Key={'id_sku': item.id_sku},
+                Key={'id_sku': item.id_sku, 'data_base': item.data_base.isoformat()},
                 UpdateExpression=(
                     "SET quantidade_disponivel = :qd, "
                     "quantidade_reservada = :qr, "
-                    "ativo = :a, "
-                    "data_base = :db"
+                    "ativo = :a"
                 ),
                 ExpressionAttributeValues={
                     ':qd': item.quantidade_disponivel,
                     ':qr': item.quantidade_reservada,
-                    ':a': item.ativo,
-                    ':db': item.data_base.isoformat()
+                    ':a': item.ativo
                 }
             )
         except ClientError as e:
             print(f"Erro ao atualizar item de estoque: {e}")
-            raise 
+            raise

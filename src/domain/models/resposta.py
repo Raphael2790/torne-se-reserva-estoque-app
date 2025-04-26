@@ -7,4 +7,4 @@ class RespostaExecucao:
     sucesso: bool
     mensagem: str
     dados: Optional[Any] = None
-    erro: Optional[str] = None 
+    erro: Optional[str] = None

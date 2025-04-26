@@ -18,7 +18,9 @@ class ItemEstoque:
         if not self.pode_reservar(quantidade):
             return False
         self.quantidade_reservada += quantidade
+        self.quantidade_disponivel -= quantidade
         return True
     
     def cancelar_reserva(self, quantidade: int) -> None:
-        self.quantidade_reservada = max(0, self.quantidade_reservada - quantidade) 
+        self.quantidade_reservada = max(0, self.quantidade_reservada - quantidade)
+        self.quantidade_disponivel += quantidade
