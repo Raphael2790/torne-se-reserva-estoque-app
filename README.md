@@ -128,3 +128,59 @@ sam delete --stack-name "torne-se-reserva-estoque-app"
 See the [AWS SAM developer guide](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html) for an introduction to SAM specification, the SAM CLI, and serverless application concepts.
 
 Next, you can use AWS Serverless Application Repository to deploy ready to use Apps that go beyond hello world samples and learn how authors developed their applications: [AWS Serverless Application Repository main page](https://aws.amazon.com/serverless/serverlessrepo/)
+
+# Reserva de Estoque
+
+Aplicação para gerenciamento de reservas de estoque usando Clean Architecture.
+
+## Estrutura do Projeto
+
+O projeto segue os princípios da Clean Architecture, com as seguintes camadas:
+
+- **Domain**: Contém as entidades, interfaces e regras de negócio
+- **Application**: Contém os casos de uso e DTOs
+- **Infrastructure**: Contém as implementações concretas dos repositórios e serviços
+- **Utils**: Contém utilitários e helpers
+
+## Configuração do Ambiente
+
+1. Instale as dependências:
+```bash
+pip install -r src/requirements.txt
+```
+
+2. Configure as variáveis de ambiente:
+```bash
+cp .env.example .env
+# Edite o arquivo .env com suas configurações
+```
+
+## Executando os Testes
+
+Para executar os testes unitários:
+
+```bash
+pytest
+```
+
+Para executar os testes com cobertura:
+
+```bash
+pytest --cov=src --cov-report=term-missing
+```
+
+## Estrutura dos Testes
+
+Os testes seguem a mesma estrutura do projeto, organizados por camada:
+
+- `tests/unit/domain/`: Testes das entidades e regras de negócio
+- `tests/unit/application/`: Testes dos casos de uso
+- `tests/unit/infrastructure/`: Testes das implementações concretas
+
+## Convenções de Teste
+
+- Nomes dos arquivos de teste: `test_*.py`
+- Nomes das classes de teste: `Test*`
+- Nomes dos métodos de teste: `test_*`
+- Uso de fixtures do pytest para setup comum
+- Padrão AAA (Arrange, Act, Assert) nos testes

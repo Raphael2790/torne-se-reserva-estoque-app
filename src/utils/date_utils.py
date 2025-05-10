@@ -19,4 +19,4 @@ def parse_iso_date(date_string: str) -> Optional[datetime]:
         
         return datetime.fromisoformat(date_string)
     except (ValueError, TypeError):
-        return None 
+        return None
