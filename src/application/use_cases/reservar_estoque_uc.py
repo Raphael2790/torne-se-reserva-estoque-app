@@ -28,10 +28,10 @@ class ReservarEstoque:
                         mensagem=f"Item de estoque não encontrado: SKU {item.idSku}",
                         dados={
                             'data_pedido': requisicao.DataPedido,
-                            'pedido_completo': requisicao.PedidoCompleto,
+                            'pedido_completo_id': str(requisicao.PedidoCompleto.id),
                             'valor_total': requisicao.ValorTotal,
                             'status': requisicao.Status,
-                            'itens': requisicao.PedidoCompleto.itens
+                            'quantidade_itens': len(requisicao.PedidoCompleto.itens)
                         }
                     )
                 
