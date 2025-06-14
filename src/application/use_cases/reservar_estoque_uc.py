@@ -1,7 +1,8 @@
+from datetime import datetime
 from domain.models.resposta import RespostaExecucao
 from domain.repositories.product_repository import RepositorioItemEstoque
 from application.dto.reserva_estoque_request import ReservaEstoqueRequest
-from domain.services.queue_service import MensagemFila
+from domain.services.queue_service import MensagemEstoqueConfirmado, MensagemEstoqueCancelada
 from infrastructure.services.sqs_service import ServicoSQS
 from typing import List
 from domain.entities.item_estoque import ItemEstoque
@@ -17,6 +18,7 @@ class ReservarEstoque:
     def executar(self, requisicao: ReservaEstoqueRequest) -> RespostaExecucao:
         try:
             resultados_reserva = []
+            item_sem_estoque = []
 
             for item in requisicao.PedidoCompleto.itens:
                 item_estoque = self.repositorio_item_estoque.obter_por_sku(item.idSku, requisicao.DataPedido)
@@ -37,37 +39,41 @@ class ReservarEstoque:
                 
                 if not item_estoque.pode_reservar(item.quantidade):
                     self.__devolver_estoque(resultados_reserva)
-                    mensagem_fila = MensagemFila(
-                        id_pedido=str(requisicao.Id),
-                        id_produto=str(item.idSku),
-                        quantidade=item.quantidade,
-                        status='SEM_ESTOQUE',
-                        mensagem=f"Estoque insuficiente para o item: {item.nomeProduto} (SKU: {item.idSku})"
-                    )
-                    self.servico_fila.enviar_mensagem(mensagem_fila, self.config.URL_FILA_SEM_ESTOQUE)
-                    return RespostaExecucao(
-                        sucesso=False,
-                        mensagem=f"Estoque insuficiente para o item: {item.nomeProduto} (SKU: {item.idSku})",
-                        dados={
-                            'data_pedido': requisicao.DataPedido,
-                            'pedido_completo': requisicao.PedidoCompleto,
-                            'valor_total': requisicao.ValorTotal,
-                            'status': requisicao.Status,
-                            'itens': requisicao.PedidoCompleto.itens
-                        }
-                    )
+                    resultados_reserva.clear()
+                    item_sem_estoque.append(item)
+                    break
                 
                 item_estoque.reservar(item.quantidade)
                 self.repositorio_item_estoque.atualizar(item_estoque)
                 
                 resultados_reserva.append(item_estoque)
             
-            mensagem_fila = MensagemFila(
-                id_pedido=str(requisicao.Id),
-                id_produto=str(requisicao.PedidoCompleto.itens[0].idSku),
-                quantidade=sum(item.quantidade for item in requisicao.PedidoCompleto.itens),
+            if len(resultados_reserva) == 0:
+                mensagem_fila = MensagemEstoqueCancelada(
+                        id_pedido=requisicao.Id,
+                        status='CANCELADO',
+                        motivo='Um dos itens não possui estoque suficiente',
+                        data_hora_evento=datetime.now()
+                    )
+                self.servico_fila.enviar_mensagem(mensagem_fila, self.config.URL_FILA_SEM_ESTOQUE)
+                return RespostaExecucao(
+                    sucesso=False,
+                    mensagem="Estoque insuficiente para os items",
+                    dados={
+                        'data_pedido': requisicao.DataPedido,
+                        'pedido_completo': requisicao.PedidoCompleto,
+                        'valor_total': requisicao.ValorTotal,
+                        'status': 'CANCELADO',
+                        'itens': item_sem_estoque
+                    }
+                )
+            
+            mensagem_fila = MensagemEstoqueConfirmado(
+                id_pedido=requisicao.Id,
+                data_pedido=requisicao.DataPedido,
+                pedido_completo=requisicao.PedidoCompleto,
                 status='RESERVADO',
-                mensagem="Estoque reservado com sucesso para todos os itens"
+                valor_total=sum([item.valor * item.quantidade for item in requisicao.PedidoCompleto.itens])
             )
             self.servico_fila.enviar_mensagem(mensagem_fila, self.config.URL_FILA_RESERVA)
             
