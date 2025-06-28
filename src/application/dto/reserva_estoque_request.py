@@ -2,6 +2,8 @@ from pydantic import BaseModel, validator
 from typing import List, Optional
 from uuid import UUID
 from utils.date_utils import parse_iso_date
+from datetime import datetime
+from dateutil.parser import isoparse
 
 
 class Endereco(BaseModel):
@@ -48,15 +50,15 @@ class PedidoCompleto(BaseModel):
 
 
 class ReservaEstoqueRequest(BaseModel):
-    DataPedido: str
+    DataPedido: datetime
     PedidoCompleto: PedidoCompleto
     ValorTotal: float
     Status: int
     Id: UUID
-    Timestamp: str
-    
-    @validator('DataPedido', 'Timestamp')
+    Timestamp: datetime
+
+    @validator('DataPedido', 'Timestamp', pre=True)
     def parse_date(cls, v):
         if isinstance(v, str):
-            return parse_iso_date(v)
+            return isoparse(v)
         return v

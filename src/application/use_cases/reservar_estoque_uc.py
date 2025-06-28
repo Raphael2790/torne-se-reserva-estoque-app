@@ -7,20 +7,23 @@ from infrastructure.services.sqs_service import ServicoSQS
 from typing import List
 from domain.entities.item_estoque import ItemEstoque
 from configuration.config import Config
+from utils.app_logger import AppLogger
 
 
 class ReservarEstoque:
-    def __init__(self, repositorio_item_estoque: RepositorioItemEstoque, servico_fila: ServicoSQS, config: Config):
+    def __init__(self, repositorio_item_estoque: RepositorioItemEstoque, servico_fila: ServicoSQS, config: Config, logger: AppLogger):
         self.repositorio_item_estoque = repositorio_item_estoque
         self.servico_fila = servico_fila
         self.config = config
+        self.logger = logger
 
     def executar(self, requisicao: ReservaEstoqueRequest) -> RespostaExecucao:
         try:
-            resultados_reserva = []
-            item_sem_estoque = []
+            resultados_reserva: List[ItemEstoque] = []
+            item_sem_estoque: List[ItemEstoque] = []
 
             for item in requisicao.PedidoCompleto.itens:
+                self.logger.info(f"Buscando item de estoque para SKU: {item.idSku} e data de pedido: {requisicao.DataPedido}")
                 item_estoque = self.repositorio_item_estoque.obter_por_sku(item.idSku, requisicao.DataPedido)
                 
                 if not item_estoque:
@@ -29,18 +32,19 @@ class ReservarEstoque:
                         sucesso=False,
                         mensagem=f"Item de estoque não encontrado: SKU {item.idSku}",
                         dados={
-                            'data_pedido': requisicao.DataPedido,
+                            'data_pedido': requisicao.DataPedido.strftime("%Y-%m-%dT%H:%M:%S%:z"),
                             'pedido_completo_id': str(requisicao.PedidoCompleto.id),
                             'valor_total': requisicao.ValorTotal,
-                            'status': requisicao.Status,
-                            'quantidade_itens': len(requisicao.PedidoCompleto.itens)
+                            'status': 'ITEM_NAO_ENCONTRADO',
+                            'itens_nao_reservados': [],
+                            'resultados_reserva': []
                         }
                     )
                 
                 if not item_estoque.pode_reservar(item.quantidade):
                     self.__devolver_estoque(resultados_reserva)
                     resultados_reserva.clear()
-                    item_sem_estoque.append(item)
+                    item_sem_estoque.append(item_estoque)
                     break
                 
                 item_estoque.reservar(item.quantidade)
@@ -60,11 +64,12 @@ class ReservarEstoque:
                     sucesso=False,
                     mensagem="Estoque insuficiente para os items",
                     dados={
-                        'data_pedido': requisicao.DataPedido,
-                        'pedido_completo': requisicao.PedidoCompleto,
+                        'data_pedido': requisicao.DataPedido.strftime("%Y-%m-%dT%H:%M:%S%:z"),
+                        'pedido_completo_id': str(requisicao.PedidoCompleto.id),
                         'valor_total': requisicao.ValorTotal,
                         'status': 'CANCELADO',
-                        'itens': item_sem_estoque
+                        'itens_nao_reservados': [item.id_sku for item in item_sem_estoque],
+                        'resultados_reserva': []
                     }
                 )
             
@@ -81,15 +86,16 @@ class ReservarEstoque:
                 sucesso=True,
                 mensagem="Estoque reservado com sucesso para todos os itens",
                 dados={
-                    'data_pedido': requisicao.DataPedido,
-                    'pedido_completo': requisicao.PedidoCompleto,
+                    'data_pedido': requisicao.DataPedido.strftime("%Y-%m-%dT%H:%M:%S%:z"),
+                    'pedido_completo_id': str(requisicao.PedidoCompleto.id),
                     'valor_total': requisicao.ValorTotal,
-                    'status': requisicao.Status,
-                    'itens': requisicao.PedidoCompleto.itens,
-                    'resultados_reserva': resultados_reserva
+                    'status': 'RESERVADO',
+                    'itens_nao_reservados': [],
+                    'resultados_reserva': [item.id_sku for item in resultados_reserva]
                 }
             )
         except Exception as e:
+            self.logger.error(f"Erro ao processar reserva de estoque: {e}")
             return RespostaExecucao(
                 sucesso=False,
                 mensagem="Erro ao processar reserva de estoque",

@@ -12,6 +12,12 @@ from application.mappings.app_mapper import AppMapper
 class Container(containers.DeclarativeContainer):
     # Configuração
     config = providers.Singleton(Config)
+    
+    # Utilitários
+    logger = providers.Factory(
+        AppLogger,
+        level=config.provided.LOG_LEVEL
+    )
 
     # Clientes AWS
     aws_dynamodb_client = providers.Singleton(
@@ -30,19 +36,15 @@ class Container(containers.DeclarativeContainer):
     repositorio_item_estoque = providers.Singleton(
         RepositorioItemEstoqueDynamoDB,
         dynamodb_client=aws_dynamodb_client,
-        nome_tabela=config.provided.DYNAMODB_TABLE_NAME
+        nome_tabela=config.provided.DYNAMODB_TABLE_NAME,
+        logger=logger
     )
 
     # Serviços
     servico_fila = providers.Singleton(
         ServicoSQS,
-        sqs_client=aws_sqs_client
-    )
-
-    # Utilitários
-    logger = providers.Singleton(
-        AppLogger,
-        level=config.provided.LOG_LEVEL
+        sqs_client=aws_sqs_client,
+        logger=logger
     )
 
     app_mapper = providers.Singleton(
@@ -53,6 +55,7 @@ class Container(containers.DeclarativeContainer):
         ReservarEstoque,
         repositorio_item_estoque=repositorio_item_estoque,
         servico_fila=servico_fila,
-        config=config
+        config=config,
+        logger=logger
     )
     

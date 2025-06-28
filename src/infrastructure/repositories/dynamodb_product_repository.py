@@ -5,12 +5,14 @@ from botocore.exceptions import ClientError
 
 from domain.entities.item_estoque import ItemEstoque
 from domain.repositories.product_repository import RepositorioItemEstoque
+from utils.app_logger import AppLogger
 
 
 class RepositorioItemEstoqueDynamoDB(RepositorioItemEstoque):
-    def __init__(self, dynamodb_client, nome_tabela: str):
+    def __init__(self, dynamodb_client, nome_tabela: str, logger: AppLogger):
         self.dynamodb = dynamodb_client
         self.tabela = self.dynamodb.Table(nome_tabela)
+        self.logger = logger
     
     def obter_por_sku(self, id_sku: int, data_pedido: Optional[datetime] = None) -> Optional[ItemEstoque]:
         try:
@@ -22,6 +24,7 @@ class RepositorioItemEstoqueDynamoDB(RepositorioItemEstoque):
             data_base = data_pedido.date().isoformat()
             
             resposta = self.tabela.get_item(Key={'id_sku': id_sku, 'data_base': data_base}, ConsistentRead=True)
+            self.logger.info(f"Resposta da consulta: {resposta}")
             item = resposta.get('Item')
             
             if not item:
@@ -36,7 +39,7 @@ class RepositorioItemEstoqueDynamoDB(RepositorioItemEstoque):
                 data_base=date.fromisoformat(item['data_base'])
             )
         except ClientError as e:
-            print(f"Erro ao obter item de estoque: {e}")
+            self.logger.error(f"Erro ao obter item de estoque: {e}")
             return None
     
     def salvar(self, item: ItemEstoque) -> None:
@@ -52,7 +55,7 @@ class RepositorioItemEstoqueDynamoDB(RepositorioItemEstoque):
                 }
             )
         except ClientError as e:
-            print(f"Erro ao salvar item de estoque: {e}")
+            self.logger.error(f"Erro ao salvar item de estoque: {e}")
             raise
     
     def atualizar(self, item: ItemEstoque) -> None:
@@ -71,5 +74,5 @@ class RepositorioItemEstoqueDynamoDB(RepositorioItemEstoque):
                 }
             )
         except ClientError as e:
-            print(f"Erro ao atualizar item de estoque: {e}")
+            self.logger.error(f"Erro ao atualizar item de estoque: {e}")
             raise
