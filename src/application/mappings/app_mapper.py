@@ -1,6 +1,7 @@
 import json
 
 from application.dto.reserva_estoque_request import PedidoCompleto, ReservaEstoqueRequest
+from application.dto.pedido_message import PedidoMessage
 
 
 class AppMapper:
@@ -31,3 +32,6 @@ class AppMapper:
             Id=corpo['Id'],
             Timestamp=corpo['Timestamp']
         )
+    
+    def map_to_pedido_message(self, string_json: str) -> PedidoMessage:
+        return PedidoMessage(**json.loads(string_json))

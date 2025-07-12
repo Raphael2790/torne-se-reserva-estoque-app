@@ -17,6 +17,11 @@ class Config:
     if not DYNAMODB_TABLE_NAME:
         raise ValueError('DYNAMODB_TABLE_NAME não configurado')
     
+    DYNAMODB_PEDIDO_TABLE_NAME = os.getenv('DYNAMODB_PEDIDO_TABLE_NAME')
+    
+    if not DYNAMODB_PEDIDO_TABLE_NAME:
+        raise ValueError('DYNAMODB_PEDIDO_TABLE_NAME não configurado')
+    
     # Configurações SQS
     URL_FILA_RESERVA = os.getenv('RESERVATION_QUEUE_URL')
     URL_FILA_SEM_ESTOQUE = os.getenv('OUT_OF_STOCK_QUEUE_URL')

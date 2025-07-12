@@ -12,13 +12,20 @@ container.init_resources()
 logger = container.logger()
 app_mapper = container.app_mapper()
 caso_uso = container.caso_uso_reservar_estoque()
+repositorio_pedido = container.repositorio_pedido()
 
 
 def __processar_mensagem(mensagem: Dict[str, Any]) -> Dict[str, Any]:
     """Processa uma única mensagem do SQS."""
     try:
         logger.info(f"Processando mensagem: {mensagem}")
-        requisicao = app_mapper.map_to_reserva_estoque_request(mensagem['body'])
+        
+        pedido_message = app_mapper.map_to_pedido_message(mensagem['body'])
+        
+        pedido = repositorio_pedido.obter_por_id_e_data_pedido(pedido_message.PedidoId, pedido_message.DataPedido)
+        
+        requisicao = app_mapper.map_to_reserva_estoque_request(pedido.pedido_completo)
+        
         resposta = caso_uso.executar(requisicao)
 
         return {
