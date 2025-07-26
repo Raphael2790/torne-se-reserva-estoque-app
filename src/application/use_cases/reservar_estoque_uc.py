@@ -55,6 +55,7 @@ class ReservarEstoque:
             if len(resultados_reserva) == 0:
                 mensagem_fila = MensagemEstoqueCancelada(
                         id_pedido=requisicao.Id,
+                        data_pedido=requisicao.DataPedido,
                         status='CANCELADO',
                         motivo='Um dos itens não possui estoque suficiente',
                         data_hora_evento=datetime.now()
@@ -76,9 +77,8 @@ class ReservarEstoque:
             mensagem_fila = MensagemEstoqueConfirmado(
                 id_pedido=requisicao.Id,
                 data_pedido=requisicao.DataPedido,
-                pedido_completo=requisicao.PedidoCompleto,
                 status='RESERVADO',
-                valor_total=sum([item.valor * item.quantidade for item in requisicao.PedidoCompleto.itens])
+                data_hora_evento=datetime.now()
             )
             self.servico_fila.enviar_mensagem(mensagem_fila, self.config.URL_FILA_RESERVA)
             

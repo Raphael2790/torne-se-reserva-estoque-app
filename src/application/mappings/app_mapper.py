@@ -19,18 +19,17 @@ class AppMapper:
             Objeto ReservaEstoqueRequest
         """
         corpo = json.loads(string_json)
-        pedido_completo_obj = json.loads(corpo['PedidoCompleto'])
-        pedido_completo = PedidoCompleto(**pedido_completo_obj)
+        pedido_completo = PedidoCompleto(**corpo)
         
         # Cria o objeto ReservaEstoqueRequest
         # Os validadores do Pydantic cuidarão da conversão das datas
         return ReservaEstoqueRequest(
-            DataPedido=corpo['DataPedido'],
+            DataPedido=corpo['dataPedido'],
             PedidoCompleto=pedido_completo,
-            ValorTotal=corpo['ValorTotal'],
-            Status=corpo['Status'],
-            Id=corpo['Id'],
-            Timestamp=corpo['Timestamp']
+            ValorTotal=corpo['valorTotal'],
+            Status=corpo['status'],
+            Id=corpo['id'],
+            Timestamp=corpo['dataCriacao']
         )
     
     def map_to_pedido_message(self, string_json: str) -> PedidoMessage:

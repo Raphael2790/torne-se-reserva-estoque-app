@@ -3,7 +3,7 @@
     {
       "messageId": "1a2b3c4d-5678-9101-1121-314151617181",
       "receiptHandle": "AQEB1234+abcd5678xyz/...",
-      "body": "{\"DataPedido\":\"2025-04-25\",\"Status\":1,\"Id\":\"4cea43ea-2b80-47ff-9e58-98621322b043\",\"PedidoId\":\"4cea43ea-2b80-47ff-9e58-98621322b043\",\"Timestamp\":\"2025-04-11T22:48:25.9030961-03:00\"}",
+      "body": "{\"DataPedido\":\"2025-07-26\",\"Status\":1,\"Id\":\"b48a5bcc-f9a3-4c7c-8ad5-e815eb5807d4\",\"PedidoId\":\"b48a5bcc-f9a3-4c7c-8ad5-e815eb5807d4\",\"Timestamp\":\"2025-04-11T22:48:25.9030961-03:00\"}",
       "attributes": {
         "ApproximateReceiveCount": "1",
         "SentTimestamp": "1711611234567",

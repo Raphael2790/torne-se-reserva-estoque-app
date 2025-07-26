@@ -13,7 +13,7 @@ class RepositorioPedidoDynamoDB(RepositorioPedido):
 
     def obter_por_id_e_data_pedido(self, pedido_id: str, data_pedido: str) -> Optional[Pedido]:
         try:
-            resposta = self.tabela.get_item(Key={'id': pedido_id, 'data_pedido': data_pedido}, ConsistentRead=True)
+            resposta = self.tabela.get_item(Key={'Id': pedido_id, 'DataPedido': data_pedido}, ConsistentRead=True)
             self.logger.info(f"Resposta da consulta: {resposta}")
             item = resposta.get('Item')
             
