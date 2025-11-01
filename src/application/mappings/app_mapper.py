@@ -2,6 +2,7 @@ import json
 
 from application.dto.reserva_estoque_request import PedidoCompleto, ReservaEstoqueRequest
 from application.dto.pedido_message import PedidoMessage
+from application.dto.cancelamento_reserva_request import CancelarReservaRequest, CancelamentoMessage
 
 
 class AppMapper:
@@ -34,3 +35,15 @@ class AppMapper:
     
     def map_to_pedido_message(self, string_json: str) -> PedidoMessage:
         return PedidoMessage(**json.loads(string_json))
+
+    def map_to_cancelar_reserva_request(self, pedido: dict) -> CancelarReservaRequest:
+        pedido_completo = PedidoCompleto(**pedido['pedido_completo'])
+
+        return CancelarReservaRequest(
+            id_pedido=pedido['id'],
+            data_pedido=pedido['data_pedido'],
+            pedido_completo=pedido_completo
+        )
+
+    def map_to_cancelamento_message(self, string_json: str) -> CancelamentoMessage:
+        return CancelamentoMessage(**json.loads(string_json))

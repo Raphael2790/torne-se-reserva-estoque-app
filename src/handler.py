@@ -1,32 +1,41 @@
 import json
 from typing import Any, Dict
-
+from enum import Enum
 from pydantic import ValidationError
 from utils.logger_decorator import log_execution
 from utils.timer_decorator import timer_execution
 from ioc.container import Container
+
+class UseCaseEnum(Enum):
+    RESERVAR_ESTOQUE = 'reservar_estoque'
+    CANCELAR_RESERVA = 'cancelar_reserva'
 
 container = Container()
 container.init_resources()
 
 logger = container.logger()
 app_mapper = container.app_mapper()
-caso_uso = container.caso_uso_reservar_estoque()
+caso_uso_reserva = container.caso_uso_reservar_estoque()
+caso_uso_cancelamento = container.caso_uso_cancelar_reserva()
 repositorio_pedido = container.repositorio_pedido()
 
-
-def __processar_mensagem(mensagem: Dict[str, Any]) -> Dict[str, Any]:
+def __processar_mensagem(mensagem: Dict[str, Any], message_attributes: Dict[str, Any]) -> Dict[str, Any]:
     """Processa uma única mensagem do SQS."""
     try:
         logger.info(f"Processando mensagem: {mensagem}")
         
-        pedido_message = app_mapper.map_to_pedido_message(mensagem['body'])
-        
-        pedido = repositorio_pedido.obter_por_id_e_data_pedido(pedido_message.PedidoId, pedido_message.DataPedido)
-        
-        requisicao = app_mapper.map_to_reserva_estoque_request(pedido.pedido_completo)
-        
-        resposta = caso_uso.executar(requisicao)
+        action = message_attributes.get('action', {'stringValue': UseCaseEnum.RESERVAR_ESTOQUE.value})['stringValue']
+
+        if action == UseCaseEnum.CANCELAR_RESERVA.value:
+            cancelamento_message = app_mapper.map_to_cancelamento_message(mensagem['body'])
+            pedido = repositorio_pedido.obter_por_id_e_data_pedido(cancelamento_message.PedidoId, cancelamento_message.DataPedido)
+            requisicao = app_mapper.map_to_cancelar_reserva_request(pedido)
+            resposta = caso_uso_cancelamento.executar(requisicao)
+        else:
+            pedido_message = app_mapper.map_to_pedido_message(mensagem['body'])
+            pedido = repositorio_pedido.obter_por_id_e_data_pedido(pedido_message.PedidoId, pedido_message.DataPedido)
+            requisicao = app_mapper.map_to_reserva_estoque_request(pedido.pedido_completo)
+            resposta = caso_uso_reserva.executar(requisicao)
 
         return {
             'sucesso': resposta.sucesso,
@@ -60,8 +69,9 @@ def handler(event: Dict[str, Any], _: Any) -> Dict[str, Any]:
         # Verifica se o evento contém o array Records
         if 'Records' in event:
             # Processa cada mensagem no array Records
-            for mensagem in event['Records']:
-                resultado = __processar_mensagem(mensagem)
+            for record in event['Records']:
+                message_attributes = record.get('messageAttributes', {})
+                resultado = __processar_mensagem(record, message_attributes)
                 resultados.append(resultado)
             
             return {

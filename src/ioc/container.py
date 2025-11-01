@@ -5,6 +5,7 @@ from configuration.config import Config
 from infrastructure.repositories.dynamodb_product_repository import RepositorioItemEstoqueDynamoDB
 from infrastructure.services.sqs_service import ServicoSQS
 from application.use_cases.reservar_estoque_uc import ReservarEstoque
+from application.use_cases.cancelar_reserva_uc import CancelarReserva
 from infrastructure.repositories.dynamodb_pedido_repository import RepositorioPedidoDynamoDB
 from utils.app_logger import AppLogger
 from application.mappings.app_mapper import AppMapper
@@ -60,6 +61,14 @@ class Container(containers.DeclarativeContainer):
         logger=logger
     )
     
+    caso_uso_cancelar_reserva = providers.Singleton(
+        CancelarReserva,
+        repositorio_item_estoque=repositorio_item_estoque,
+        servico_fila=servico_fila,
+        config=config,
+        logger=logger
+    )
+
     repositorio_pedido = providers.Singleton(
         RepositorioPedidoDynamoDB,
         dynamodb_client=aws_dynamodb_client,
